@@ -28,19 +28,22 @@ function tocLines(value: string) {
     }));
 }
 
-function redirectTo(request: Request, path: string) {
-  return NextResponse.redirect(new URL(path, request.url));
+function redirectTo(path: string) {
+  return new NextResponse(null, {
+    status: 303,
+    headers: { Location: path },
+  });
 }
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
-  if (!user) return redirectTo(request, "/login");
-  if (!canPublish(user.role)) return redirectTo(request, "/guandaoguan");
+  if (!user) return redirectTo("/login");
+  if (!canPublish(user.role)) return redirectTo("/guandaoguan");
 
   const formData = await request.formData();
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    return redirectTo(request, "/guandaoguan/books/new");
+    return redirectTo("/guandaoguan/books/new");
   }
 
   const upload = await saveBookUpload(file);
@@ -72,5 +75,5 @@ export async function POST(request: Request) {
   });
 
   revalidatePath("/guandaoguan");
-  return redirectTo(request, `/guandaoguan/books/${book.id}`);
+  return redirectTo(`/guandaoguan/books/${book.id}`);
 }
