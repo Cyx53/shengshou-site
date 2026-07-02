@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  PUBLISHER
+  VIEWER
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum PostSection {
+  BLOG
+  QIANAI
+}
+
+enum MediaKind {
+  PHOTO
+  VIDEO
+}
+
+enum BookFormat {
+  PDF
+  EPUB
+  TXT
+  OTHER
+}
+
+enum ReadingRecordKind {
+  NOTE
+  HIGHLIGHT
+  BOOKMARK
+  REFLECTION
+}
+
+enum CreativeWorkStatus {
+  DRAFT
+  SERIALIZING
+  FINISHED
+}
+
+enum CommentTarget {
+  POST
+  MEMORY_ALBUM
+  MEMORY_ITEM
+}
+
+enum CommentStatus {
+  PUBLISHED
+  HIDDEN
+  PENDING
+}
+
+model User {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  displayName  String
+  passwordHash String
+  role         Role      @default(VIEWER)
+  isActive     Boolean   @default(true)
+  posts        Post[]
+  comments     Comment[]
+  books        Book[]
+  readingRecords ReadingRecord[]
+  creativeWorks CreativeWork[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Post {
+  id        String     @id @default(cuid())
+  title     String
+  excerpt   String?
+  content   String
+  coverUrl  String?
+  status    PostStatus @default(DRAFT)
+  section   PostSection @default(BLOG)
+  authorId  String
+  author    User       @relation(fields: [authorId], references: [id])
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model MemoryAlbum {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  coverUrl    String?
+  eventDate   DateTime?
+  items       MemoryItem[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model MemoryItem {
+  id          String      @id @default(cuid())
+  albumId     String
+  album       MemoryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  kind        MediaKind
+  title       String
+  description String?
+  mediaUrl    String
+  thumbnailUrl String?
+  takenAt     DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Book {
+  id          String          @id @default(cuid())
+  title       String
+  author      String?
+  description String?
+  coverUrl    String?
+  fileUrl     String
+  format      BookFormat      @default(OTHER)
+  sourceUrl   String?
+  uploaderId  String
+  uploader    User            @relation(fields: [uploaderId], references: [id])
+  chapters    BookChapter[]
+  records     ReadingRecord[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([format])
+  @@index([uploaderId])
+}
+
+model BookChapter {
+  id        String          @id @default(cuid())
+  bookId    String
+  book      Book            @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  title     String
+  position  Int
+  locator   String?
+  records   ReadingRecord[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([bookId, position])
+}
+
+model ReadingRecord {
+  id        String            @id @default(cuid())
+  bookId    String
+  book      Book              @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User              @relation(fields: [userId], references: [id])
+  chapterId String?
+  chapter   BookChapter?      @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  parentRecordId String?
+  parentRecord ReadingRecord? @relation("ReadingRecordComments", fields: [parentRecordId], references: [id], onDelete: Cascade)
+  childRecords ReadingRecord[] @relation("ReadingRecordComments")
+  kind      ReadingRecordKind
+  body      String
+  quote     String?
+  locator   String?
+  pageNumber Int?
+  annotationStyle String?
+  color     String?
+  rects     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([bookId, kind])
+  @@index([bookId, pageNumber])
+  @@index([userId])
+  @@index([chapterId])
+  @@index([parentRecordId])
+}
+
+model CreativeWork {
+  id          String             @id @default(cuid())
+  title       String
+  synopsis    String?
+  coverUrl    String?
+  status      CreativeWorkStatus @default(DRAFT)
+  authorId    String
+  author      User               @relation(fields: [authorId], references: [id])
+  chapters    CreativeChapter[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([authorId])
+}
+
+model CreativeChapter {
+  id        String       @id @default(cuid())
+  workId    String
+  work      CreativeWork @relation(fields: [workId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  position  Int
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([workId, position])
+}
+
+model Comment {
+  id         String        @id @default(cuid())
+  authorId   String
+  author     User          @relation(fields: [authorId], references: [id])
+  body       String
+  targetType CommentTarget
+  targetId   String
+  parentId   String?
+  parent     Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies    Comment[]     @relation("CommentReplies")
+  status     CommentStatus @default(PUBLISHED)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([targetType, targetId])
+  @@index([parentId])
+}

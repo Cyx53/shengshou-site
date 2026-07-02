@@ -1,0 +1,14 @@
+services:
+  app:
+    build:
+      context: .
+    container_name: shengshou-app
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - /data/shengshou/db:/data/db
+      - /data/shengshou/uploads:/app/public/uploads
+      - /data/shengshou/backups:/backups
