@@ -16,6 +16,10 @@ function secret() {
   return process.env.SESSION_SECRET || "dev-secret";
 }
 
+function shouldUseSecureCookie() {
+  return process.env.SESSION_COOKIE_SECURE === "true";
+}
+
 function sign(value: string) {
   return createHmac("sha256", secret()).update(value).digest("base64url");
 }
@@ -60,7 +64,7 @@ export async function setSession(userId: string, role: Role) {
   cookieStore.set(COOKIE_NAME, createSessionToken({ userId, role, expiresAt }), {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookie(),
     path: "/",
     expires: new Date(expiresAt),
   });
