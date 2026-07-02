@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createBookAction } from "@/app/actions";
 import { canPublish, requireUser } from "@/lib/auth";
 
 export default async function NewBookPage() {
@@ -21,7 +20,7 @@ export default async function NewBookPage() {
       </section>
 
       <section className="form-panel full-editor-panel">
-        <form action={createBookAction} className="form-grid">
+        <form action="/api/books" method="post" encType="multipart/form-data" className="form-grid">
           <label>
             书名
             <input name="title" required />
