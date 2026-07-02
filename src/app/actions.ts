@@ -55,6 +55,8 @@ function readingRecordKind(value: string) {
   return ReadingRecordKind.NOTE;
 }
 
+const PDF_TOC_AUTO_EXTRACT_LIMIT = 80 * 1024 * 1024;
+
 function tocLines(value: string) {
   return value
     .split(/\r?\n/)
@@ -316,7 +318,7 @@ export async function createBookAction(formData: FormData) {
       : stringValue(formData, "coverUrl") || null;
   const manualChapters = tocLines(stringValue(formData, "toc"));
   const detectedChapters =
-    upload.format === "PDF"
+    upload.format === "PDF" && file.size <= PDF_TOC_AUTO_EXTRACT_LIMIT
       ? await extractPdfToc(upload.path).catch(() => [])
       : [];
   const chapters = detectedChapters.length > 0 ? detectedChapters : manualChapters;
