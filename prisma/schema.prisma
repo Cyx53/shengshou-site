@@ -21,6 +21,7 @@ enum PostStatus {
 enum PostSection {
   BLOG
   QIANAI
+  CHENYAN
 }
 
 enum MediaKind {
@@ -72,6 +73,7 @@ model User {
   books        Book[]
   readingRecords ReadingRecord[]
   creativeWorks CreativeWork[]
+  callRecordings CallRecording[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
@@ -204,6 +206,19 @@ model CreativeChapter {
   updatedAt DateTime     @updatedAt
 
   @@index([workId, position])
+}
+
+model CallRecording {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  audioUrl    String
+  uploaderId  String
+  uploader    User     @relation(fields: [uploaderId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([uploaderId])
 }
 
 model Comment {

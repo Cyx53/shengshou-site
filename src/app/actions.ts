@@ -41,10 +41,12 @@ function postStatus(value: string) {
 }
 
 function postSection(value: string) {
+  if (value === "CHENYAN") return PostSection.CHENYAN;
   return value === "QIANAI" ? PostSection.QIANAI : PostSection.BLOG;
 }
 
 function sectionPath(section: PostSection) {
+  if (section === "CHENYAN") return "/chenyan";
   return section === "QIANAI" ? "/qianai" : "/blog";
 }
 
@@ -111,6 +113,9 @@ export async function createPostAction(formData: FormData) {
   const user = await requireUser();
   if (!canPublish(user.role)) throw new Error("No permission to publish.");
   const section = postSection(stringValue(formData, "section"));
+  if (section === "CHENYAN" && !canAdmin(user.role)) {
+    throw new Error("Only admins can publish in this section.");
+  }
 
   await prisma.post.create({
     data: {
@@ -135,6 +140,9 @@ export async function updatePostAction(formData: FormData) {
   const postId = stringValue(formData, "postId");
   const post = await assertCanManagePost(postId, user.id, user.role);
   const section = postSection(stringValue(formData, "section") || post.section);
+  if ((post.section === "CHENYAN" || section === "CHENYAN") && !canAdmin(user.role)) {
+    throw new Error("Only admins can edit this section.");
+  }
 
   await prisma.post.update({
     where: { id: postId },
@@ -150,6 +158,7 @@ export async function updatePostAction(formData: FormData) {
 
   revalidatePath("/blog");
   revalidatePath("/qianai");
+  revalidatePath("/chenyan");
   revalidatePath(`${sectionPath(section)}/${postId}`);
   redirect(`${sectionPath(section)}/${postId}`);
 }
@@ -160,6 +169,9 @@ export async function deletePostAction(formData: FormData) {
 
   const postId = stringValue(formData, "postId");
   const post = await assertCanManagePost(postId, user.id, user.role);
+  if (post.section === "CHENYAN" && !canAdmin(user.role)) {
+    throw new Error("Only admins can delete this section.");
+  }
 
   await prisma.comment.deleteMany({
     where: { targetType: "POST", targetId: postId },
@@ -168,6 +180,7 @@ export async function deletePostAction(formData: FormData) {
 
   revalidatePath("/blog");
   revalidatePath("/qianai");
+  revalidatePath("/chenyan");
   redirect(sectionPath(post.section));
 }
 

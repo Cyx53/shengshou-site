@@ -21,15 +21,19 @@ const quotes = [
 const sections = [
   { href: "/blog", title: "文以载道", desc: "记事、长文、复盘与宣言" },
   { href: "/qianai", title: "谦爱集", desc: "另一处文章集，收束温柔与锋芒" },
+  { href: "/chenyan", title: "陈言普语", desc: "管理员留存的文章与通话录音" },
   { href: "/memories", title: "心路", desc: "照片、视频和共同走过的回忆" },
   { href: "/guandaoguan", title: "观道观", desc: "电子书库、共同阅读与创作空间" },
 ];
 
 export default async function HomePage() {
   const user = await requireUser();
-  const [blogCount, qianaiCount, albumCount, bookCount] = await Promise.all([
+  const [blogCount, qianaiCount, chenyanCount, albumCount, bookCount] = await Promise.all([
     prisma.post.count({ where: { section: PostSection.BLOG, status: "PUBLISHED" } }),
     prisma.post.count({ where: { section: PostSection.QIANAI, status: "PUBLISHED" } }),
+    user.role === "ADMIN"
+      ? prisma.post.count({ where: { section: PostSection.CHENYAN } })
+      : Promise.resolve(0),
     prisma.memoryAlbum.count(),
     prisma.book.count(),
   ]);
@@ -37,6 +41,7 @@ export default async function HomePage() {
   const counts = new Map([
     ["/blog", `${blogCount} 篇文章`],
     ["/qianai", `${qianaiCount} 篇文章`],
+    ["/chenyan", user.role === "ADMIN" ? `${chenyanCount} 篇文章` : "暂无内容"],
     ["/memories", `${albumCount} 个相册`],
     ["/guandaoguan", `${bookCount} 本书`],
   ]);

@@ -451,6 +451,11 @@ a.media-card:hover {
   margin: 0;
 }
 
+.post-card audio {
+  width: 100%;
+  min-height: 40px;
+}
+
 .post-card-head,
 .article-actions {
   display: flex;
@@ -468,6 +473,17 @@ a.media-card:hover {
   display: grid;
   gap: 16px;
   align-content: start;
+}
+
+.section-heading {
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: clamp(24px, 3vw, 34px);
 }
 
 .two-col {

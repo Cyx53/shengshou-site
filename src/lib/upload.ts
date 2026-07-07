@@ -4,6 +4,18 @@ import { randomUUID } from "crypto";
 
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const VIDEO_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
+const AUDIO_TYPES = new Set([
+  "audio/mpeg",
+  "audio/mp3",
+  "audio/mp4",
+  "audio/aac",
+  "audio/wav",
+  "audio/x-wav",
+  "audio/webm",
+  "audio/ogg",
+  "audio/flac",
+  "audio/x-m4a",
+]);
 const BOOK_TYPES = new Map([
   ["application/pdf", "PDF"],
   ["application/epub+zip", "EPUB"],
@@ -74,4 +86,21 @@ export async function saveBookUpload(file: File) {
     url: `/uploads/books/${filename}`,
     path: path.join(uploadDir, filename),
   };
+}
+
+export async function saveAudioUpload(file: File) {
+  const ext = path.extname(file.name).toLowerCase();
+  const allowedExts = new Set([".mp3", ".m4a", ".wav", ".aac", ".ogg", ".webm", ".flac"]);
+  if (!AUDIO_TYPES.has(file.type) && !allowedExts.has(ext)) {
+    throw new Error("通话录音仅支持 MP3、M4A、WAV、AAC、OGG、WebM 和 FLAC 文件。");
+  }
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const filename = `${randomUUID()}${ext || ".audio"}`;
+  const uploadDir = path.join(process.cwd(), "public", "uploads", "recordings");
+
+  await mkdir(uploadDir, { recursive: true });
+  await writeFile(path.join(uploadDir, filename), bytes);
+
+  return `/uploads/recordings/${filename}`;
 }

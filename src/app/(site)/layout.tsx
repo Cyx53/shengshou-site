@@ -16,6 +16,7 @@ export default async function SiteLayout({
           <Link href="/">首页</Link>
           <Link href="/blog">文以载道</Link>
           <Link href="/qianai">谦爱集</Link>
+          <Link href="/chenyan">陈言普语</Link>
           <Link href="/memories">心路</Link>
           <Link href="/guandaoguan">观道观</Link>
           {user.role === "ADMIN" ? <Link href="/admin/users">用户</Link> : null}
