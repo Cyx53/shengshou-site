@@ -407,6 +407,7 @@ export function PdfPageReader({
   const [loading, setLoading] = useState(true);
   const [rendering, setRendering] = useState(false);
   const [error, setError] = useState("");
+  const [compactReader, setCompactReader] = useState(false);
   const [autoToc, setAutoToc] = useState<TocEntry[]>([]);
   const [activeDock, setActiveDock] = useState<"preview" | "toc" | "records" | "bookmarks">("preview");
   const [textItems, setTextItems] = useState<PageTextItem[]>([]);
@@ -427,6 +428,12 @@ export function PdfPageReader({
     () => Array.from({ length: pageCount }, (_, index) => index + 1),
     [pageCount],
   );
+  const previewPageNumbers = useMemo(() => {
+    if (!compactReader) return pageNumbers;
+    return Array.from(new Set([1, page - 1, page, page + 1, pageCount]))
+      .filter((pageNumber) => pageNumber >= 1 && pageNumber <= pageCount)
+      .sort((a, b) => a - b);
+  }, [compactReader, page, pageCount, pageNumbers]);
   const pageStates = useMemo(() => buildPageStates(records), [records]);
   const currentRecords = useMemo(() => recordsForPage(records, page), [records, page]);
   const allTopLevelRecords = useMemo(() => records.filter((record) => !record.parentRecordId), [records]);
@@ -812,6 +819,21 @@ export function PdfPageReader({
   }, []);
 
   useEffect(() => {
+    const query = window.matchMedia("(max-width: 780px)");
+    const syncReaderMode = () => {
+      setCompactReader(query.matches);
+      if (query.matches) {
+        setScale((value) => Math.min(value, 0.82));
+        setActiveDock("records");
+      }
+    };
+
+    syncReaderMode();
+    query.addEventListener("change", syncReaderMode);
+    return () => query.removeEventListener("change", syncReaderMode);
+  }, []);
+
+  useEffect(() => {
     if (pageCount && page > pageCount) {
       goToPage(pageCount);
     }
@@ -824,7 +846,11 @@ export function PdfPageReader({
     setAutoToc([]);
 
     pdfjs
-      .getDocument({ url: fileUrl })
+      .getDocument({
+        url: fileUrl,
+        rangeChunkSize: 65536,
+        disableAutoFetch: compactReader,
+      })
       .promise.then((document) => {
         if (cancelled) return;
         setPdf(document);
@@ -839,7 +865,7 @@ export function PdfPageReader({
     return () => {
       cancelled = true;
     };
-  }, [fileUrl]);
+  }, [compactReader, fileUrl]);
 
   useEffect(() => {
     if (!pdf) return;
@@ -980,7 +1006,7 @@ export function PdfPageReader({
   });
 
   return (
-    <div className="immersive-reader">
+    <div className={compactReader ? "immersive-reader is-compact-reader" : "immersive-reader"}>
       <header className="immersive-reader-topbar">
         <div className="zotero-tab-row">
           <a className="zotero-library-link" href="/guandaoguan">
@@ -1111,7 +1137,7 @@ export function PdfPageReader({
           <div className="zotero-sidebar-content">
             {activeDock === "preview" ? (
               <div className="reader-preview-list" aria-label="页面预览">
-                {pageNumbers.map((pageNumber) => (
+                {previewPageNumbers.map((pageNumber) => (
                   <PdfThumbnail
                     key={pageNumber}
                     pdf={pdf}
@@ -1121,7 +1147,7 @@ export function PdfPageReader({
                     onGo={goToPage}
                   />
                 ))}
-                {!pageNumbers.length ? <p className="muted">正在生成页览...</p> : null}
+                {!previewPageNumbers.length ? <p className="muted">正在生成页览...</p> : null}
               </div>
             ) : null}
 
@@ -1180,7 +1206,17 @@ export function PdfPageReader({
           </div>
           <div className="reader-page-scroll">
             {loading ? <p className="muted">正在打开 PDF...</p> : null}
-            {error ? <p className="error">{error}</p> : null}
+            {error ? (
+              <div className="pdf-fallback-panel">
+                <p className="error">{error}</p>
+                <a className="button small" href={fileUrl} target="_blank" rel="noreferrer">
+                  打开原 PDF
+                </a>
+                <a className="button secondary small" href={fileUrl} download>
+                  下载文件
+                </a>
+              </div>
+            ) : null}
             <div
               ref={pageFrameRef}
               className={rendering ? "pdf-page-frame is-rendering" : "pdf-page-frame"}

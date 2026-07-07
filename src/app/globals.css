@@ -2542,6 +2542,22 @@ body:has(.immersive-reader)::before {
   padding: 20px 36px;
 }
 
+.pdf-fallback-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  max-width: min(520px, 100%);
+  padding: 16px;
+}
+
+.pdf-fallback-panel .error {
+  flex-basis: 100%;
+  margin: 0;
+  text-align: center;
+}
+
 .pdf-page-frame {
   box-shadow: 0 0 0 1px #c9c9c9, 0 8px 24px rgb(0 0 0 / 12%);
 }
@@ -3661,24 +3677,69 @@ body:has(.immersive-reader)::before {
     background-size: 980px;
   }
 
+  .immersive-reader.is-compact-reader {
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+  }
+
   .immersive-reader-topbar {
     grid-template-columns: 1fr;
     align-items: stretch;
+  }
+
+  .is-compact-reader .zotero-tab-row {
+    height: 40px;
+    padding: 0 10px;
+  }
+
+  .is-compact-reader .zotero-document-tab {
+    max-width: calc(100vw - 90px);
+    min-height: 30px;
+    padding: 3px 8px;
+  }
+
+  .is-compact-reader .zotero-document-tab small {
+    display: none;
+  }
+
+  .is-compact-reader .zotero-toolbar-row {
+    height: auto;
+    min-height: 44px;
+    overflow-x: auto;
+    padding: 6px 8px;
+  }
+
+  .is-compact-reader .zotero-tool-group:first-child,
+  .is-compact-reader .zotero-annotation-tools {
+    display: none;
   }
 
   .reader-top-actions {
     justify-content: flex-start;
   }
 
-  .reader-workspace {
+  .reader-workspace,
+  .is-compact-reader .reader-workspace {
     grid-template-columns: 1fr;
-    overflow: auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .is-compact-reader .reader-left-dock,
+  .is-compact-reader .reader-note-dock {
+    display: none;
   }
 
   .reader-left-dock,
   .reader-note-dock,
-  .reader-sheet {
+  .reader-sheet,
+  .is-compact-reader .reader-sheet {
     min-height: 320px;
+  }
+
+  .is-compact-reader .reader-sheet {
+    min-height: 0;
+    height: 100%;
   }
 
   .reader-preview-list {
@@ -3690,7 +3751,14 @@ body:has(.immersive-reader)::before {
     overflow: visible;
   }
 
-  .reader-page-scroll {
-    padding: 14px;
+  .reader-page-scroll,
+  .is-compact-reader .reader-page-scroll {
+    align-content: start;
+    overflow: auto;
+    padding: 12px;
+  }
+
+  .is-compact-reader .pdf-page-frame {
+    transform-origin: top center;
   }
 }
