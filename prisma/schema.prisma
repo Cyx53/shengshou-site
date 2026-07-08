@@ -53,6 +53,7 @@ enum CommentTarget {
   POST
   MEMORY_ALBUM
   MEMORY_ITEM
+  CALL_RECORDING
 }
 
 enum CommentStatus {

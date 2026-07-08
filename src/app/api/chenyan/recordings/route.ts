@@ -25,20 +25,28 @@ export async function POST(request: Request) {
   if (!canAdmin(user.role)) return redirectTo("/chenyan");
 
   const formData = await request.formData();
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) {
+  const files = formData
+    .getAll("files")
+    .filter((file): file is File => file instanceof File && file.size > 0);
+
+  if (files.length === 0) {
     return redirectTo("/chenyan/recordings/new");
   }
 
-  const audioUrl = await saveAudioUpload(file);
-  await prisma.callRecording.create({
-    data: {
-      title: stringValue(formData, "title") || file.name.replace(/\.[^.]+$/, ""),
-      description: stringValue(formData, "description") || null,
-      audioUrl,
-      uploaderId: user.id,
-    },
-  });
+  const title = stringValue(formData, "title");
+  const description = stringValue(formData, "description") || null;
+
+  for (const file of files) {
+    const audioUrl = await saveAudioUpload(file);
+    await prisma.callRecording.create({
+      data: {
+        title: files.length === 1 && title ? title : file.name.replace(/\.[^.]+$/, ""),
+        description,
+        audioUrl,
+        uploaderId: user.id,
+      },
+    });
+  }
 
   revalidatePath("/chenyan");
   return redirectTo("/chenyan");

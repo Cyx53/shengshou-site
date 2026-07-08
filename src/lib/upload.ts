@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, unlink, writeFile } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 
@@ -103,4 +103,15 @@ export async function saveAudioUpload(file: File) {
   await writeFile(path.join(uploadDir, filename), bytes);
 
   return `/uploads/recordings/${filename}`;
+}
+
+export async function deleteUploadByUrl(url: string | null | undefined) {
+  if (!url?.startsWith("/uploads/")) return;
+
+  const publicDir = path.join(process.cwd(), "public");
+  const targetPath = path.normalize(path.join(publicDir, url));
+  const uploadsDir = path.normalize(path.join(publicDir, "uploads"));
+
+  if (!targetPath.startsWith(uploadsDir)) return;
+  await unlink(targetPath).catch(() => undefined);
 }

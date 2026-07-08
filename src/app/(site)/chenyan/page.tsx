@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { PostSection } from "@prisma/client";
+import { CommentTarget, PostSection } from "@prisma/client";
+import { deleteCallRecordingAction } from "@/app/actions";
+import { CommentSection } from "@/components/CommentSection";
 import { canAdmin, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -34,6 +36,27 @@ export default async function ChenyanPage() {
       include: { uploader: { select: { displayName: true } } },
     }),
   ]);
+
+  const recordingIds = recordings.map((recording) => recording.id);
+  const recordingComments = recordingIds.length
+    ? await prisma.comment.findMany({
+        where: {
+          targetType: CommentTarget.CALL_RECORDING,
+          targetId: { in: recordingIds },
+          status: "PUBLISHED",
+        },
+        orderBy: { createdAt: "asc" },
+        include: { author: { select: { displayName: true } } },
+      })
+    : [];
+
+  const commentsByRecording = new Map<string, typeof recordingComments>();
+  for (const comment of recordingComments) {
+    commentsByRecording.set(comment.targetId, [
+      ...(commentsByRecording.get(comment.targetId) ?? []),
+      comment,
+    ]);
+  }
 
   return (
     <div className="stack">
@@ -85,14 +108,30 @@ export default async function ChenyanPage() {
           </article>
         ) : null}
         {recordings.map((recording) => (
-          <article className="content-card post-card" key={recording.id}>
+          <article className="content-card post-card recording-card" key={recording.id}>
             <div className="post-card-head">
               <span className="pill">{recording.uploader.displayName}</span>
               <span className="muted">{recording.createdAt.toLocaleString("zh-CN")}</span>
             </div>
-            <h2>{recording.title}</h2>
+            <div className="recording-title-row">
+              <h2>{recording.title}</h2>
+              <form action={deleteCallRecordingAction}>
+                <input type="hidden" name="recordingId" value={recording.id} />
+                <button className="button secondary small danger-button" type="submit">
+                  删除录音
+                </button>
+              </form>
+            </div>
             {recording.description ? <p className="muted">{recording.description}</p> : null}
             <audio controls preload="metadata" src={recording.audioUrl} />
+            <CommentSection
+              title="录音评论"
+              comments={commentsByRecording.get(recording.id) ?? []}
+              currentUser={user}
+              targetType={CommentTarget.CALL_RECORDING}
+              targetId={recording.id}
+              returnTo="/chenyan"
+            />
           </article>
         ))}
       </section>

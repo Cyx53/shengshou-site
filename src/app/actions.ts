@@ -20,7 +20,7 @@ import {
 } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { extractPdfToc } from "@/lib/pdf-toc";
-import { saveBookUpload, saveImageUpload, saveUpload } from "@/lib/upload";
+import { deleteUploadByUrl, saveBookUpload, saveImageUpload, saveUpload } from "@/lib/upload";
 
 function stringValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -556,6 +556,24 @@ export async function createCommentAction(formData: FormData) {
 
   revalidatePath(returnTo);
   redirect(returnTo);
+}
+
+export async function deleteCallRecordingAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canAdmin(user.role)) throw new Error("Only admins can delete call recordings.");
+
+  const recordingId = stringValue(formData, "recordingId");
+  const recording = await prisma.callRecording.findUnique({ where: { id: recordingId } });
+  if (!recording) redirect("/chenyan");
+
+  await prisma.comment.deleteMany({
+    where: { targetType: "CALL_RECORDING", targetId: recording.id },
+  });
+  await prisma.callRecording.delete({ where: { id: recording.id } });
+  await deleteUploadByUrl(recording.audioUrl);
+
+  revalidatePath("/chenyan");
+  redirect("/chenyan");
 }
 
 export async function deleteCommentAction(formData: FormData) {

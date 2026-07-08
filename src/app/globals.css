@@ -456,6 +456,40 @@ a.media-card:hover {
   min-height: 40px;
 }
 
+.recording-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.recording-title-row h2 {
+  flex: 1 1 240px;
+}
+
+.danger-button {
+  color: rgb(134 46 34 / 92%);
+  background: rgb(154 63 47 / 9%);
+}
+
+.danger-button:hover {
+  color: white;
+  background: rgb(154 63 47 / 88%);
+}
+
+.recording-card .comment-section {
+  justify-self: stretch;
+  width: 100%;
+  margin-top: 6px;
+  padding: 14px 0 0;
+  border-top: 1px solid rgb(222 216 203 / 62%);
+}
+
+.recording-card .comment-section-head h2 {
+  font-size: 18px;
+}
+
 .post-card-head,
 .article-actions {
   display: flex;
