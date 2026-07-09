@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { CommentTarget, PostSection } from "@prisma/client";
-import { deleteCallRecordingAction } from "@/app/actions";
-import { CommentSection } from "@/components/CommentSection";
+import { PostSection } from "@prisma/client";
+import { deleteCallSessionAction } from "@/app/actions";
 import { canAdmin, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -25,38 +24,20 @@ export default async function ChenyanPage() {
     );
   }
 
-  const [posts, recordings] = await Promise.all([
+  const [posts, sessions] = await Promise.all([
     prisma.post.findMany({
       where: { section: PostSection.CHENYAN },
       orderBy: { createdAt: "desc" },
       include: { author: { select: { displayName: true } } },
     }),
-    prisma.callRecording.findMany({
+    prisma.callSession.findMany({
       orderBy: { createdAt: "desc" },
-      include: { uploader: { select: { displayName: true } } },
+      include: {
+        uploader: { select: { displayName: true } },
+        _count: { select: { recordings: true } },
+      },
     }),
   ]);
-
-  const recordingIds = recordings.map((recording) => recording.id);
-  const recordingComments = recordingIds.length
-    ? await prisma.comment.findMany({
-        where: {
-          targetType: CommentTarget.CALL_RECORDING,
-          targetId: { in: recordingIds },
-          status: "PUBLISHED",
-        },
-        orderBy: { createdAt: "asc" },
-        include: { author: { select: { displayName: true } } },
-      })
-    : [];
-
-  const commentsByRecording = new Map<string, typeof recordingComments>();
-  for (const comment of recordingComments) {
-    commentsByRecording.set(comment.targetId, [
-      ...(commentsByRecording.get(comment.targetId) ?? []),
-      comment,
-    ]);
-  }
 
   return (
     <div className="stack">
@@ -67,7 +48,7 @@ export default async function ChenyanPage() {
         </div>
         <div className="article-actions">
           <Link className="button secondary" href="/chenyan/recordings/new">
-            上传通话录音
+            新建通话
           </Link>
           <Link className="button" href="/chenyan/new">
             写新文章
@@ -98,42 +79,36 @@ export default async function ChenyanPage() {
 
       <section className="stack">
         <div className="section-heading">
-          <p className="pill">通话录音</p>
-          <h2>录音存档</h2>
+          <p className="pill">通话档案</p>
+          <h2>一次通话，一张卡片</h2>
         </div>
-        {recordings.length === 0 ? (
+        {sessions.length === 0 ? (
           <article className="content-card empty-state">
-            <h2>还没有录音</h2>
-            <p className="muted">上传后的通话录音会出现在这里。</p>
+            <h2>还没有通话</h2>
+            <p className="muted">上传一条录音或一个录音文件夹，建立第一份通话档案。</p>
           </article>
         ) : null}
-        {recordings.map((recording) => (
-          <article className="content-card post-card recording-card" key={recording.id}>
-            <div className="post-card-head">
-              <span className="pill">{recording.uploader.displayName}</span>
-              <span className="muted">{recording.createdAt.toLocaleString("zh-CN")}</span>
-            </div>
-            <div className="recording-title-row">
-              <h2>{recording.title}</h2>
-              <form action={deleteCallRecordingAction}>
-                <input type="hidden" name="recordingId" value={recording.id} />
-                <button className="button secondary small danger-button" type="submit">
-                  删除录音
+        <div className="call-session-grid">
+          {sessions.map((session) => (
+            <article className="content-card call-session-card" key={session.id}>
+              <Link href={`/chenyan/calls/${session.id}`} className="call-session-link">
+                <div className="post-card-head">
+                  <span className="pill">{session._count.recordings} 条录音</span>
+                  <span className="muted">{session.createdAt.toLocaleString("zh-CN")}</span>
+                </div>
+                <h2>{session.title}</h2>
+                <p className="muted">{session.description || "暂无通话说明"}</p>
+                <p className="muted">整理人：{session.uploader.displayName}</p>
+              </Link>
+              <form action={deleteCallSessionAction}>
+                <input type="hidden" name="sessionId" value={session.id} />
+                <button className="text-danger" type="submit">
+                  删除本次通话
                 </button>
               </form>
-            </div>
-            {recording.description ? <p className="muted">{recording.description}</p> : null}
-            <audio controls preload="metadata" src={recording.audioUrl} />
-            <CommentSection
-              title="录音评论"
-              comments={commentsByRecording.get(recording.id) ?? []}
-              currentUser={user}
-              targetType={CommentTarget.CALL_RECORDING}
-              targetId={recording.id}
-              returnTo="/chenyan"
-            />
-          </article>
-        ))}
+            </article>
+          ))}
+        </div>
       </section>
     </div>
   );

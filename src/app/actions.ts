@@ -563,8 +563,9 @@ export async function deleteCallRecordingAction(formData: FormData) {
   if (!canAdmin(user.role)) throw new Error("Only admins can delete call recordings.");
 
   const recordingId = stringValue(formData, "recordingId");
+  const returnTo = stringValue(formData, "returnTo") || "/chenyan";
   const recording = await prisma.callRecording.findUnique({ where: { id: recordingId } });
-  if (!recording) redirect("/chenyan");
+  if (!recording) redirect(returnTo);
 
   await prisma.comment.deleteMany({
     where: { targetType: "CALL_RECORDING", targetId: recording.id },
@@ -572,6 +573,53 @@ export async function deleteCallRecordingAction(formData: FormData) {
   await prisma.callRecording.delete({ where: { id: recording.id } });
   await deleteUploadByUrl(recording.audioUrl);
 
+  revalidatePath("/chenyan");
+  revalidatePath(returnTo);
+  redirect(returnTo);
+}
+
+export async function updateCallSessionNotesAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canAdmin(user.role)) throw new Error("Only admins can edit call notes.");
+
+  const sessionId = stringValue(formData, "sessionId");
+  const notes = stringValue(formData, "notes") || null;
+  const returnTo = `/chenyan/calls/${sessionId}`;
+
+  await prisma.callSession.update({
+    where: { id: sessionId },
+    data: { notes },
+  });
+
+  revalidatePath(returnTo);
+  redirect(returnTo);
+}
+
+export async function deleteCallSessionAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canAdmin(user.role)) throw new Error("Only admins can delete call sessions.");
+
+  const sessionId = stringValue(formData, "sessionId");
+  const session = await prisma.callSession.findUnique({
+    where: { id: sessionId },
+    include: { recordings: { select: { id: true, audioUrl: true } } },
+  });
+  if (!session) redirect("/chenyan");
+
+  const recordingIds = session.recordings.map((recording) => recording.id);
+  await prisma.$transaction([
+    prisma.comment.deleteMany({
+      where: {
+        OR: [
+          { targetType: "CALL_SESSION", targetId: session.id },
+          { targetType: "CALL_RECORDING", targetId: { in: recordingIds } },
+        ],
+      },
+    }),
+    prisma.callSession.delete({ where: { id: session.id } }),
+  ]);
+
+  await Promise.all(session.recordings.map((recording) => deleteUploadByUrl(recording.audioUrl)));
   revalidatePath("/chenyan");
   redirect("/chenyan");
 }

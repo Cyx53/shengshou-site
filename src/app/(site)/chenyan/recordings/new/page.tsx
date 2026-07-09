@@ -28,12 +28,16 @@ export default async function NewCallRecordingPage() {
             className="form-grid"
           >
             <label>
-              标题
-              <input name="title" placeholder="可留空，默认使用文件名" />
+              本次通话标题
+              <input name="title" placeholder="可留空，默认使用录音文件名" />
             </label>
             <label>
-              说明
+              通话说明
               <textarea name="description" placeholder="记录通话对象、时间或要点" />
+            </label>
+            <label>
+              通话笔记
+              <textarea name="notes" placeholder="可以稍后在通话详情中继续整理" />
             </label>
             <label>
               录音文件
@@ -59,8 +63,16 @@ export default async function NewCallRecordingPage() {
             className="form-grid"
           >
             <label>
-              批量说明
-              <textarea name="description" placeholder="这批录音共用的说明，可留空" />
+              本次通话标题
+              <input name="title" required placeholder="例如：2026 年 7 月 9 日晚间通话" />
+            </label>
+            <label>
+              通话说明
+              <textarea name="description" placeholder="记录通话对象、时间或主题" />
+            </label>
+            <label>
+              通话笔记
+              <textarea name="notes" placeholder="本次通话的整体笔记，可稍后继续整理" />
             </label>
             <label>
               录音文件夹
@@ -74,7 +86,7 @@ export default async function NewCallRecordingPage() {
               />
             </label>
             <p className="muted">
-              批量上传时，每个音频文件会单独生成一条录音，标题默认使用文件名。
+              文件夹代表一次通话，文件夹内的每个音频会成为这次通话中的一条录音。
             </p>
             <button className="button" type="submit">
               保存整个文件夹

@@ -56,6 +56,25 @@ async function main() {
       },
     },
   });
+
+  const legacyRecordings = await prisma.callRecording.findMany({
+    where: { sessionId: null },
+  });
+
+  for (const recording of legacyRecordings) {
+    await prisma.callSession.create({
+      data: {
+        id: recording.id,
+        title: recording.title,
+        description: recording.description,
+        uploaderId: recording.uploaderId,
+        createdAt: recording.createdAt,
+        recordings: {
+          connect: { id: recording.id },
+        },
+      },
+    });
+  }
 }
 
 main()

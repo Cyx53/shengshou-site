@@ -53,6 +53,7 @@ enum CommentTarget {
   POST
   MEMORY_ALBUM
   MEMORY_ITEM
+  CALL_SESSION
   CALL_RECORDING
 }
 
@@ -74,6 +75,7 @@ model User {
   books        Book[]
   readingRecords ReadingRecord[]
   creativeWorks CreativeWork[]
+  callSessions CallSession[]
   callRecordings CallRecording[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -209,16 +211,33 @@ model CreativeChapter {
   @@index([workId, position])
 }
 
+model CallSession {
+  id          String          @id @default(cuid())
+  title       String
+  description String?
+  notes       String?
+  uploaderId  String
+  uploader    User            @relation(fields: [uploaderId], references: [id])
+  recordings  CallRecording[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([uploaderId])
+}
+
 model CallRecording {
   id          String   @id @default(cuid())
   title       String
   description String?
   audioUrl    String
+  sessionId   String?
+  session     CallSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   uploaderId  String
   uploader    User     @relation(fields: [uploaderId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@index([sessionId])
   @@index([uploaderId])
 }
 

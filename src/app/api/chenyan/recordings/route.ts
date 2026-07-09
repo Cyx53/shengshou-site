@@ -35,19 +35,32 @@ export async function POST(request: Request) {
 
   const title = stringValue(formData, "title");
   const description = stringValue(formData, "description") || null;
+  const notes = stringValue(formData, "notes") || null;
+  const savedFiles = [];
 
   for (const file of files) {
     const audioUrl = await saveAudioUpload(file);
-    await prisma.callRecording.create({
-      data: {
-        title: files.length === 1 && title ? title : file.name.replace(/\.[^.]+$/, ""),
-        description,
-        audioUrl,
-        uploaderId: user.id,
-      },
+    savedFiles.push({
+      title: file.name.replace(/\.[^.]+$/, ""),
+      audioUrl,
     });
   }
 
+  const session = await prisma.callSession.create({
+    data: {
+      title: title || (files.length === 1 ? savedFiles[0].title : `通话记录 ${new Date().toLocaleDateString("zh-CN")}`),
+      description,
+      notes,
+      uploaderId: user.id,
+      recordings: {
+        create: savedFiles.map((file) => ({
+          ...file,
+          uploaderId: user.id,
+        })),
+      },
+    },
+  });
+
   revalidatePath("/chenyan");
-  return redirectTo("/chenyan");
+  return redirectTo(`/chenyan/calls/${session.id}`);
 }

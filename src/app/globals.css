@@ -490,6 +490,54 @@ a.media-card:hover {
   font-size: 18px;
 }
 
+.call-session-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 16px;
+}
+
+.call-session-card {
+  display: grid;
+  align-content: space-between;
+  gap: 16px;
+  padding: 22px;
+}
+
+.call-session-link {
+  display: grid;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.call-session-link h2,
+.call-summary p,
+.call-notes h2,
+.recording-card h2 {
+  margin: 0;
+}
+
+.call-summary,
+.call-notes {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+}
+
+.call-detail > .comment-section {
+  margin: 0;
+}
+
+.call-detail .recording-card {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+}
+
+.call-detail .recording-card audio {
+  width: 100%;
+}
+
 .post-card-head,
 .article-actions {
   display: flex;
