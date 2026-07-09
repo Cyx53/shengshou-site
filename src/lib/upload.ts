@@ -1,6 +1,6 @@
+import { randomUUID } from "crypto";
 import { mkdir, unlink, writeFile } from "fs/promises";
 import path from "path";
-import { randomUUID } from "crypto";
 
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const VIDEO_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
@@ -16,11 +16,15 @@ const AUDIO_TYPES = new Set([
   "audio/flac",
   "audio/x-m4a",
 ]);
+const AUDIO_EXTS = new Set([".mp3", ".m4a", ".wav", ".aac", ".ogg", ".webm", ".flac"]);
 const BOOK_TYPES = new Map([
   ["application/pdf", "PDF"],
   ["application/epub+zip", "EPUB"],
   ["text/plain", "TXT"],
 ]);
+
+export const MAX_AUDIO_UPLOAD_BYTES = 200 * 1024 * 1024;
+export const MAX_AUDIO_UPLOAD_MB = MAX_AUDIO_UPLOAD_BYTES / 1024 / 1024;
 
 export function detectMediaKind(type: string) {
   if (IMAGE_TYPES.has(type)) return "PHOTO" as const;
@@ -88,14 +92,21 @@ export async function saveBookUpload(file: File) {
   };
 }
 
-export async function saveAudioUpload(file: File) {
+export function validateAudioFile(file: File) {
   const ext = path.extname(file.name).toLowerCase();
-  const allowedExts = new Set([".mp3", ".m4a", ".wav", ".aac", ".ogg", ".webm", ".flac"]);
-  if (!AUDIO_TYPES.has(file.type) && !allowedExts.has(ext)) {
+  if (!AUDIO_TYPES.has(file.type) && !AUDIO_EXTS.has(ext)) {
     throw new Error("通话录音仅支持 MP3、M4A、WAV、AAC、OGG、WebM 和 FLAC 文件。");
   }
+  if (file.size > MAX_AUDIO_UPLOAD_BYTES) {
+    throw new Error(`单条录音不能超过 ${MAX_AUDIO_UPLOAD_MB}MB。`);
+  }
+}
+
+export async function saveAudioUpload(file: File) {
+  validateAudioFile(file);
 
   const bytes = Buffer.from(await file.arrayBuffer());
+  const ext = path.extname(file.name).toLowerCase();
   const filename = `${randomUUID()}${ext || ".audio"}`;
   const uploadDir = path.join(process.cwd(), "public", "uploads", "recordings");
 

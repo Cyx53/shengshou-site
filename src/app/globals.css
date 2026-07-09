@@ -538,6 +538,78 @@ a.media-card:hover {
   width: 100%;
 }
 
+.upload-flow {
+  gap: 18px;
+}
+
+.upload-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 14px;
+}
+
+.upload-picker {
+  display: grid;
+  gap: 10px;
+  min-height: 112px;
+  padding: 16px;
+  border: 1px dashed rgb(42 111 96 / 34%);
+  border-radius: 8px;
+  background: rgb(245 248 242 / 74%);
+  cursor: pointer;
+}
+
+.upload-picker span {
+  color: rgb(19 46 40);
+  font-weight: 800;
+}
+
+.upload-status,
+.selected-file-list,
+.upload-progress {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 72%);
+  border: 1px solid rgb(222 216 203 / 72%);
+}
+
+.upload-status span,
+.selected-file-list span,
+.upload-progress p {
+  color: rgb(99 116 108);
+}
+
+.selected-file-list {
+  max-height: 190px;
+  overflow: auto;
+  font-size: 14px;
+}
+
+.upload-progress > div {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(216 224 219);
+}
+
+.upload-progress > div > span {
+  display: block;
+  height: 100%;
+  background: rgb(36 112 96);
+  transition: width 180ms ease;
+}
+
+.form-error {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  color: rgb(130 42 33);
+  background: rgb(154 63 47 / 10%);
+  font-weight: 700;
+}
+
 .post-card-head,
 .article-actions {
   display: flex;
