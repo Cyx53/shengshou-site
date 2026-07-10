@@ -23,7 +23,7 @@ export function MemoryItemForm({
   includeFile = false,
 }: MemoryItemFormProps) {
   return (
-    <form action={action} className="form-grid">
+    <form action={action} className="form-grid" encType="multipart/form-data">
       {albumId ? <input type="hidden" name="albumId" value={albumId} /> : null}
       {item ? <input type="hidden" name="itemId" value={item.id} /> : null}
       <label>
